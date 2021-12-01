@@ -1,0 +1,153 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-parcelize'
+    id 'kotlin-kapt'
+}
+
+android {
+    compileSdk 31
+
+    defaultConfig {
+        applicationId "com.example.testcomposeapp"
+        minSdk 21
+        targetSdk 31
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+    buildTypes {
+        debug {
+            // For Development
+            minifyEnabled false
+        }
+        staging {
+            // For CI/CD - Jenkins
+            minifyEnabled false
+            testCoverageEnabled true
+        }
+        release {
+            // For Production
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    flavorDimensions "releaseType"
+    productFlavors {
+        mock {
+            buildConfigField "String", "MOCK_ENABLE", "\"true\""
+            dimension "releaseType"
+            applicationIdSuffix = ".mock"
+        }
+        prod {
+            buildConfigField "String", "MOCK_ENABLE", "\"false\""
+            dimension "releaseType"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    addTestOptions()
+    ignoreMockRelease()
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation "androidx.compose.material:material:$compose_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation "androidx.compose.material:material-icons-extended:$compose_version"
+    implementation "androidx.navigation:navigation-compose:2.4.0-beta02"
+    implementation "androidx.compose.ui:ui-util:$compose_version"
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.0-beta02"
+    implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
+    implementation 'androidx.activity:activity-compose:1.3.1'
+    implementation 'androidx.room:room-common:2.3.0'
+    implementation 'androidx.room:room-ktx:2.3.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+
+    def accompanist_version = "0.21.2-beta"
+    implementation "com.google.accompanist:accompanist-insets:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-pager:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
+
+    def room_version = "2.3.0"
+
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+
+    // retrofit
+    implementation 'com.google.code.gson:gson:2.8.7'
+    def retrofitVersion = "2.9.0"
+    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofitVersion"
+    implementation "com.squareup.retrofit2:retrofit-mock:$retrofitVersion"
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.4.0'
+
+    // KTX
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.4.0"
+
+    // Koin
+    def koin_version = "3.1.3"
+    implementation "io.insert-koin:koin-core:$koin_version"
+    implementation "io.insert-koin:koin-android:$koin_version"
+    implementation "io.insert-koin:koin-androidx-compose:$koin_version"
+    implementation "io.insert-koin:koin-androidx-navigation:$koin_version"
+    testImplementation "io.insert-koin:koin-test-junit4:$koin_version"
+
+}
+
+def addTestOptions() {
+    // Always show the result of every unit test, even if it passes.
+    android.testOptions.unitTests {
+        includeAndroidResources = true
+
+        all {
+            testLogging {
+                events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+            }
+        }
+    }
+}
+
+def ignoreMockRelease() {
+    // Remove mockRelease as it's not needed.
+    android.variantFilter { variant ->
+        if (variant.buildType.name == 'release'
+                && variant.getFlavors().get(0).name == 'mock') {
+            variant.setIgnore(true)
+        }
+        if (variant.buildType.name == 'staging'
+                && variant.getFlavors().get(0).name == 'prod') {
+            variant.setIgnore(true)
+        }
+    }
+}
